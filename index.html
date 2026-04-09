@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Agenda · Psic. Nayeli</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --sage:#7a9e8e; --sage-light:#b5cfc5; --sage-pale:#e8f0ed;
+  --cream:#faf7f2; --warm-white:#fff9f3; --ink:#2c3330;
+  --muted:#6b7b74; --accent:#c4876a; --accent-light:#e8c4ae;
+  --gold:#b89a6a; --divider:#d8e3de;
+  --tab-h:68px; --header-h:62px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);display:flex;flex-direction:column;}
+
+/* TOP BAR */
+.top-bar{height:var(--header-h);background:var(--ink);display:flex;align-items:center;padding:0 16px;gap:10px;flex-shrink:0;z-index:50;}
+.top-bar-title{flex:1;}
+.top-bar-title h1{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:.98rem;color:var(--sage-light);line-height:1.2;letter-spacing:.03em;}
+.top-bar-title p{font-size:.6rem;color:var(--accent-light);font-style:italic;letter-spacing:.05em;margin-top:2px;}
+.top-bar-year{font-family:'Cormorant Garamond',serif;font-size:1.9rem;font-weight:300;color:var(--sage-light);opacity:.45;line-height:1;}
+
+/* CONTENT */
+.content{flex:1;overflow:hidden;position:relative;}
+
+/* SCREENS */
+.screen{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;flex-direction:column;}
+.screen.active{display:flex;}
+
+/* BOTTOM TABS */
+.bottom-tabs{height:var(--tab-h);background:var(--warm-white);border-top:1px solid var(--divider);display:flex;flex-shrink:0;padding-bottom:env(safe-area-inset-bottom,0);}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:none;background:transparent;cursor:pointer;color:var(--muted);font-size:.55rem;font-weight:500;letter-spacing:.07em;text-transform:uppercase;padding:8px 0;}
+.tab .ti{font-size:1.25rem;line-height:1;}
+.tab.active{color:var(--sage);}
+
+/* ═══ SCREEN CAL ═══ */
+#screen-cal{background:var(--warm-white);}
+
+.month-strip{display:flex;overflow-x:auto;scrollbar-width:none;background:var(--ink);flex-shrink:0;}
+.month-strip::-webkit-scrollbar{display:none;}
+.m-chip{font-size:.62rem;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.4);padding:10px 11px;border:none;background:transparent;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .2s;}
+.m-chip.active{color:var(--sage-light);border-bottom-color:var(--sage);}
+
+.cal-month-title{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:300;color:var(--sage);padding:16px 16px 8px;letter-spacing:.02em;flex-shrink:0;}
+
+.cal-grid-wrap{padding:0 10px 12px;flex-shrink:0;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.cal-hdr{font-size:.58rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:center;padding:5px 0;}
+.cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:.84rem;color:var(--ink);cursor:pointer;position:relative;-webkit-user-select:none;}
+.cal-day:active{background:var(--sage-pale);}
+.cal-day.sunday{color:var(--accent);}
+.cal-day.today{outline:2px solid var(--accent);}
+.cal-day.selected{background:var(--sage);color:#fff;font-weight:500;}
+.cal-day.has-note::after{content:'';position:absolute;bottom:2px;width:4px;height:4px;border-radius:50%;background:var(--accent);}
+.cal-day.empty{cursor:default;}
+
+.day-preview{flex:1;border-top:1px solid var(--divider);padding:14px 16px 24px;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.dp-title{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:400;color:var(--ink);text-transform:capitalize;margin-bottom:10px;}
+.preview-appt{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--sage-pale);margin-bottom:7px;border-left:3px solid var(--sage);}
+.preview-appt.urgent{background:#fdf0ea;border-left-color:var(--accent);}
+.preview-appt.personal{background:#f5f0e8;border-left-color:var(--gold);}
+.pt{font-size:.7rem;font-weight:500;color:var(--muted);min-width:36px;}
+.pn{font-size:.82rem;font-weight:500;color:var(--ink);}
+.preview-empty{font-size:.8rem;color:var(--muted);font-style:italic;text-align:center;margin-top:18px;}
+.go-btn{display:block;width:100%;margin-top:14px;padding:13px;background:var(--sage);color:#fff;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;letter-spacing:.04em;cursor:pointer;}
+
+/* ═══ SCREEN DÍA ═══ */
+#screen-day{background:var(--cream);}
+
+.day-top{background:var(--ink);padding:14px 16px 12px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.day-top-num{font-family:'Cormorant Garamond',serif;font-size:2.8rem;font-weight:300;color:var(--sage-light);line-height:1;}
+.day-top-info h3{font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:400;color:#fff;text-transform:capitalize;}
+.day-top-info p{font-size:.62rem;color:var(--sage-light);opacity:.65;margin-top:2px;}
+
+.action-row{display:flex;gap:7px;padding:10px 12px;background:var(--warm-white);border-bottom:1px solid var(--divider);flex-shrink:0;overflow-x:auto;scrollbar-width:none;}
+.action-row::-webkit-scrollbar{display:none;}
+.act-btn{display:flex;align-items:center;gap:5px;padding:9px 13px;border-radius:20px;border:1.5px solid var(--divider);background:var(--cream);font-size:.7rem;font-weight:500;letter-spacing:.04em;color:var(--muted);cursor:pointer;white-space:nowrap;}
+.act-btn:active{background:var(--sage-pale);border-color:var(--sage-light);color:var(--sage);}
+.act-btn.danger:active{background:#fdf0ea;border-color:var(--accent);color:var(--accent);}
+
+.hour-list{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 0 12px;}
+.hour-row{display:flex;align-items:stretch;min-height:54px;border-bottom:1px solid var(--divider);}
+.hour-lbl{width:50px;flex-shrink:0;font-size:.65rem;font-weight:500;color:var(--muted);letter-spacing:.04em;padding:9px 6px 0 12px;text-align:right;}
+.hour-cell{flex:1;border-left:1px solid var(--divider);padding:5px 9px;min-height:54px;}
+
+.appt-card{background:var(--sage-pale);border-left:3px solid var(--sage);border-radius:0 8px 8px 0;padding:7px 32px 7px 9px;margin-bottom:5px;position:relative;animation:fadeUp .2s ease;}
+.appt-card.urgent{background:#fdf0ea;border-left-color:var(--accent);}
+.appt-card.personal{background:#f5f0e8;border-left-color:var(--gold);}
+.appt-inp{display:block;width:100%;border:none;background:transparent;font-family:'DM Sans',sans-serif;color:var(--ink);outline:none;-webkit-appearance:none;}
+.appt-inp.nm{font-size:.86rem;font-weight:500;}
+.appt-inp.nt{font-size:.72rem;color:var(--muted);margin-top:2px;}
+.appt-del{position:absolute;right:7px;top:50%;transform:translateY(-50%);width:22px;height:22px;border-radius:50%;border:none;background:rgba(0,0,0,.08);color:var(--muted);font-size:.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.add-inline{font-size:.7rem;color:var(--sage);border:1px dashed var(--sage-light);border-radius:6px;background:transparent;padding:4px 9px;cursor:pointer;margin-top:2px;}
+
+.notes-section{flex-shrink:0;padding:14px 14px 20px;background:var(--warm-white);border-top:1px solid var(--divider);}
+.notes-lbl{font-family:'Cormorant Garamond',serif;font-size:.9rem;color:var(--muted);letter-spacing:.05em;margin-bottom:7px;}
+.notes-ta{width:100%;min-height:78px;border:1px solid var(--divider);border-radius:10px;padding:11px 13px;font-family:'DM Sans',sans-serif;font-size:.84rem;color:var(--ink);background:var(--cream);resize:none;outline:none;line-height:1.65;-webkit-appearance:none;}
+.notes-ta:focus{border-color:var(--sage-light);}
+.notes-ta::placeholder{color:var(--muted);font-style:italic;}
+.mood-row{display:flex;align-items:center;gap:5px;margin-top:10px;flex-wrap:wrap;}
+.mood-lbl{font-size:.62rem;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-right:4px;}
+.mood-btn{font-size:1.45rem;border:none;background:none;cursor:pointer;opacity:.4;transition:opacity .15s,transform .15s;padding:2px;border-radius:50%;}
+.mood-btn.active{opacity:1;transform:scale(1.2);}
+
+/* ═══ SCREEN NOTAS ═══ */
+#screen-notes{background:var(--cream);padding:20px 16px;}
+.nh{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:300;color:var(--sage);margin-bottom:3px;}
+.ns{font-size:.72rem;color:var(--muted);margin-bottom:18px;}
+.note-card{background:var(--warm-white);border:1px solid var(--divider);border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer;}
+.note-card:active{border-color:var(--sage-light);}
+.nc-date{font-size:.65rem;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;display:flex;align-items:center;gap:6px;}
+.nc-text{font-size:.83rem;color:var(--ink);line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.notes-empty{text-align:center;color:var(--muted);font-style:italic;margin-top:60px;font-size:.88rem;}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(44,51,48,.45);z-index:200;align-items:flex-end;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--warm-white);border-radius:20px 20px 0 0;padding:18px 16px 36px;width:100%;animation:slideUp .25s ease;}
+.modal h3{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:400;color:var(--ink);margin-bottom:14px;}
+.mf{margin-bottom:12px;}
+.mf label{display:block;font-size:.65rem;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+.mf input,.mf select{width:100%;padding:12px 13px;border:1.5px solid var(--divider);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--ink);background:var(--cream);outline:none;-webkit-appearance:none;}
+.mf input:focus,.mf select:focus{border-color:var(--sage);}
+.m-actions{display:flex;gap:9px;margin-top:4px;}
+.m-btn{flex:1;padding:13px;border-radius:12px;border:none;font-family:'DM Sans',sans-serif;font-size:.86rem;font-weight:500;cursor:pointer;}
+.m-btn.cancel{background:var(--divider);color:var(--muted);}
+.m-btn.confirm{background:var(--sage);color:#fff;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@media(min-width:600px){body{max-width:420px;margin:0 auto;box-shadow:0 0 40px rgba(0,0,0,.12);}}
+</style>
+</head>
+<body>
+
+<header class="top-bar">
+  <div class="top-bar-title">
+    <h1>Psic. Nayeli Lizeth Sánchez Faurrieta</h1>
+    <p>Agenda de Consulta Psicológica</p>
+  </div>
+  <div class="top-bar-year" id="yearLbl">2026</div>
+</header>
+
+<div class="content">
+
+  <!-- CALENDARIO -->
+  <div class="screen active" id="screen-cal">
+    <div class="month-strip" id="monthStrip"></div>
+    <div class="cal-month-title" id="calMonthTitle"></div>
+    <div class="cal-grid-wrap"><div class="cal-grid" id="calGrid"></div></div>
+    <div class="day-preview" id="dayPreview"></div>
+  </div>
+
+  <!-- DÍA -->
+  <div class="screen" id="screen-day">
+    <div class="day-top">
+      <div class="day-top-num" id="dayNum">—</div>
+      <div class="day-top-info">
+        <h3 id="dayName">—</h3>
+        <p id="dayMes">—</p>
+      </div>
+    </div>
+    <div class="action-row">
+      <button class="act-btn" onclick="openModal('patient')">👤 Paciente</button>
+      <button class="act-btn" onclick="openModal('urgent')">⚡ Urgente</button>
+      <button class="act-btn" onclick="openModal('personal')">🌿 Personal</button>
+      <button class="act-btn danger" onclick="clearDay()">🗑 Limpiar</button>
+    </div>
+    <div class="hour-list" id="hourList"></div>
+    <div class="notes-section">
+      <div class="notes-lbl">Notas del día</div>
+      <textarea class="notes-ta" id="dayNotes" placeholder="Observaciones, seguimientos, recordatorios…"></textarea>
+      <div class="mood-row">
+        <span class="mood-lbl">Cómo fue</span>
+        <button class="mood-btn" data-mood="0" onclick="setMood(0)">😔</button>
+        <button class="mood-btn" data-mood="1" onclick="setMood(1)">😐</button>
+        <button class="mood-btn" data-mood="2" onclick="setMood(2)">🙂</button>
+        <button class="mood-btn" data-mood="3" onclick="setMood(3)">😊</button>
+        <button class="mood-btn" data-mood="4" onclick="setMood(4)">✨</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTAS -->
+  <div class="screen" id="screen-notes">
+    <div class="nh">Notas recientes</div>
+    <div class="ns">Días con citas o notas guardadas</div>
+    <div id="notesList"></div>
+  </div>
+
+</div>
+
+<nav class="bottom-tabs">
+  <button class="tab active" id="tab-cal" onclick="showScreen('cal')">
+    <span class="ti">📅</span>Calendario
+  </button>
+  <button class="tab" id="tab-day" onclick="showScreen('day')">
+    <span class="ti">📋</span>Agenda
+  </button>
+  <button class="tab" id="tab-notes" onclick="showScreen('notes')">
+    <span class="ti">📝</span>Notas
+  </button>
+</nav>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modalBg" onclick="closeModal(event)">
+  <div class="modal">
+    <h3 id="modalTitle">Agregar cita</h3>
+    <div class="mf"><label>Hora</label><select id="modalHour"></select></div>
+    <div class="mf"><label>Nombre / Título</label><input type="text" id="modalName" placeholder="Nombre del paciente…"></div>
+    <div class="mf"><label>Nota (opcional)</label><input type="text" id="modalNote" placeholder="Motivo, observación…"></div>
+    <div class="m-actions">
+      <button class="m-btn cancel" onclick="closeModal()">Cancelar</button>
+      <button class="m-btn confirm" onclick="confirmModal()">Agregar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const MONTHS=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DAYS=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+const MOODS=['😔','😐','🙂','😊','✨'];
+const HOURS=[];
+for(let h=7;h<=20;h++){HOURS.push(`${String(h).padStart(2,'0')}:00`);if(h<20)HOURS.push(`${String(h).padStart(2,'0')}:30`);}
+
+const today=new Date();
+let currentYear=2026;
+let currentMonth=today.getMonth();
+let selectedDate=new Date(today);
+
+const storageKey=d=>`nayeli_${d.getFullYear()}_${d.getMonth()}_${d.getDate()}`;
+const saveDay=(d,data)=>localStorage.setItem(storageKey(d),JSON.stringify(data));
+const loadDay=d=>{const r=localStorage.getItem(storageKey(d));return r?JSON.parse(r):{appointments:{},notes:'',mood:null};};
+
+let dayData={};
+let modalType='patient';
+
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  if(name==='notes')buildNotesList();
+  if(name==='day')renderDayScreen();
+}
+
+function buildMonthStrip(){
+  const strip=document.getElementById('monthStrip');
+  strip.innerHTML='';
+  MONTHS.forEach((m,i)=>{
+    const btn=document.createElement('button');
+    btn.className='m-chip'+(i===currentMonth?' active':'');
+    btn.textContent=m;
+    btn.onclick=()=>{currentMonth=i;buildMonthStrip();buildCalendar();};
+    strip.appendChild(btn);
+  });
+  const a=strip.querySelector('.active');
+  if(a)setTimeout(()=>a.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'}),50);
+}
+
+function buildCalendar(){
+  document.getElementById('calMonthTitle').textContent=`${MONTHS[currentMonth]} ${currentYear}`;
+  const grid=document.getElementById('calGrid');
+  grid.innerHTML='';
+  ['D','L','M','X','J','V','S'].forEach(d=>{const h=document.createElement('div');h.className='cal-hdr';h.textContent=d;grid.appendChild(h);});
+  const first=new Date(currentYear,currentMonth,1).getDay();
+  const dim=new Date(currentYear,currentMonth+1,0).getDate();
+  for(let i=0;i<first;i++){const e=document.createElement('div');e.className='cal-day empty';grid.appendChild(e);}
+  for(let d=1;d<=dim;d++){
+    const cell=document.createElement('div');
+    const date=new Date(currentYear,currentMonth,d);
+    const isSun=date.getDay()===0;
+    const isToday=date.toDateString()===today.toDateString();
+    const isSel=date.toDateString()===selectedDate.toDateString();
+    const dd=loadDay(date);
+    const has=Object.keys(dd.appointments).some(h=>dd.appointments[h]?.length)||dd.notes;
+    cell.className='cal-day'+(isSun?' sunday':'')+(isToday?' today':'')+(isSel?' selected':'')+(has?' has-note':'');
+    cell.textContent=d;
+    cell.onclick=()=>{selectedDate=new Date(currentYear,currentMonth,d);dayData=loadDay(selectedDate);buildCalendar();buildDayPreview();};
+    grid.appendChild(cell);
+  }
+  buildDayPreview();
+}
+
+function buildDayPreview(){
+  const preview=document.getElementById('dayPreview');
+  const dd=loadDay(selectedDate);
+  const dateStr=`${DAYS[selectedDate.getDay()]}, ${selectedDate.getDate()} de ${MONTHS[selectedDate.getMonth()]}`;
+  let html=`<div class="dp-title">${dateStr}</div>`;
+  let hasAny=false;
+  HOURS.forEach(h=>{
+    (dd.appointments[h]||[]).forEach(a=>{
+      hasAny=true;
+      html+=`<div class="preview-appt ${a.type==='urgent'?'urgent':a.type==='personal'?'personal':''}">
+        <span class="pt">${h}</span>
+        <span class="pn">${a.title||(a.type==='urgent'?'⚡ Urgente':a.type==='personal'?'🌿 Personal':'👤 Paciente')}</span>
+      </div>`;
+    });
+  });
+  if(!hasAny)html+=`<div class="preview-empty">Sin citas registradas para este día</div>`;
+  html+=`<button class="go-btn" onclick="goToDay()">Abrir agenda del día →</button>`;
+  preview.innerHTML=html;
+}
+
+function goToDay(){dayData=loadDay(selectedDate);showScreen('day');}
+
+function renderDayScreen(){
+  dayData=loadDay(selectedDate);
+  document.getElementById('dayNum').textContent=selectedDate.getDate();
+  document.getElementById('dayName').textContent=`${DAYS[selectedDate.getDay()]}, ${MONTHS[selectedDate.getMonth()]}`;
+  document.getElementById('dayMes').textContent=`${selectedDate.getFullYear()} · Consulta psicológica`;
+  const ta=document.getElementById('dayNotes');
+  ta.value=dayData.notes||'';
+  ta.oninput=()=>{dayData.notes=ta.value;autoSave();};
+  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('active'));
+  if(dayData.mood!==null&&dayData.mood!==undefined)
+    document.querySelector(`.mood-btn[data-mood="${dayData.mood}"]`)?.classList.add('active');
+  buildHourList();
+}
+
+function buildHourList(){
+  if(!dayData.appointments)dayData.appointments={};
+  const list=document.getElementById('hourList');
+  list.innerHTML='';
+  HOURS.forEach(hour=>{
+    const row=document.createElement('div');row.className='hour-row';
+    const lbl=document.createElement('div');lbl.className='hour-lbl';lbl.textContent=hour;
+    const cell=document.createElement('div');cell.className='hour-cell';cell.dataset.hour=hour;
+    (dayData.appointments[hour]||[]).forEach((a,i)=>cell.appendChild(makeCard(a,hour,i)));
+    const btn=document.createElement('button');btn.className='add-inline';btn.textContent='+ agregar';
+    btn.onclick=()=>openModal('patient',hour);
+    cell.appendChild(btn);
+    row.appendChild(lbl);row.appendChild(cell);list.appendChild(row);
+  });
+}
+
+function makeCard(appt,hour,idx){
+  const c=document.createElement('div');
+  c.className='appt-card'+(appt.type==='urgent'?' urgent':appt.type==='personal'?' personal':'');
+  const ni=document.createElement('input');ni.className='appt-inp nm';ni.type='text';ni.value=appt.title||'';
+  ni.placeholder=appt.type==='urgent'?'⚡ Urgente':appt.type==='personal'?'🌿 Personal':'👤 Paciente';
+  ni.oninput=()=>{dayData.appointments[hour][idx].title=ni.value;autoSave();};
+  const nti=document.createElement('input');nti.className='appt-inp nt';nti.type='text';nti.value=appt.detail||'';
+  nti.placeholder='Nota…';
+  nti.oninput=()=>{dayData.appointments[hour][idx].detail=nti.value;autoSave();};
+  const del=document.createElement('button');del.className='appt-del';del.textContent='✕';
+  del.onclick=()=>{dayData.appointments[hour].splice(idx,1);autoSave();buildHourList();};
+  c.appendChild(ni);c.appendChild(nti);c.appendChild(del);
+  return c;
+}
+
+function openModal(type,hour=null){
+  modalType=type;
+  const titles={patient:'Agregar paciente',urgent:'Agregar urgente',personal:'Agregar personal'};
+  document.getElementById('modalTitle').textContent=titles[type]||'Agregar cita';
+  const sel=document.getElementById('modalHour');sel.innerHTML='';
+  HOURS.forEach(h=>{const o=document.createElement('option');o.value=h;o.textContent=h;if(h===hour)o.selected=true;sel.appendChild(o);});
+  if(!hour){const n=new Date();const nh=`${String(n.getHours()).padStart(2,'0')}:${n.getMinutes()<30?'00':'30'}`;const m=HOURS.find(h=>h===nh);if(m)sel.value=m;}
+  document.getElementById('modalName').value='';
+  document.getElementById('modalNote').value='';
+  document.getElementById('modalBg').classList.add('open');
+  setTimeout(()=>document.getElementById('modalName').focus(),300);
+}
+function closeModal(e){if(!e||e.target===document.getElementById('modalBg'))document.getElementById('modalBg').classList.remove('open');}
+function confirmModal(){
+  const hour=document.getElementById('modalHour').value;
+  const title=document.getElementById('modalName').value.trim();
+  const detail=document.getElementById('modalNote').value.trim();
+  if(!dayData.appointments)dayData.appointments={};
+  if(!dayData.appointments[hour])dayData.appointments[hour]=[];
+  dayData.appointments[hour].push({type:modalType,title,detail});
+  autoSave();buildHourList();
+  document.getElementById('modalBg').classList.remove('open');
+  setTimeout(()=>{const rows=document.querySelectorAll('.hour-row');const idx=HOURS.indexOf(hour);if(rows[idx])rows[idx].scrollIntoView({behavior:'smooth',block:'center'});},100);
+}
+
+function setMood(m){
+  dayData.mood=m;autoSave();
+  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector(`.mood-btn[data-mood="${m}"]`)?.classList.add('active');
+}
+
+function clearDay(){
+  if(!confirm('¿Limpiar todos los datos de este día?'))return;
+  dayData={appointments:{},notes:'',mood:null};autoSave();renderDayScreen();
+}
+
+function buildNotesList(){
+  const list=document.getElementById('notesList');
+  const entries=[];
+  for(let key in localStorage){
+    if(!key.startsWith('nayeli_'))continue;
+    const parts=key.split('_');if(parts.length<4)continue;
+    const[,y,m,d]=parts;const date=new Date(+y,+m,+d);
+    const data=JSON.parse(localStorage.getItem(key));
+    const has=(data.notes&&data.notes.trim())||Object.values(data.appointments||{}).some(a=>a.length);
+    if(has)entries.push({date,data});
+  }
+  entries.sort((a,b)=>b.date-a.date);
+  if(!entries.length){list.innerHTML='<div class="notes-empty">Aún no hay notas guardadas</div>';return;}
+  list.innerHTML='';
+  entries.slice(0,40).forEach(({date,data})=>{
+    const card=document.createElement('div');card.className='note-card';
+    const ds=`${DAYS[date.getDay()]}, ${date.getDate()} ${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+    const me=data.mood!==null&&data.mood!==undefined?MOODS[data.mood]:'';
+    const ac=Object.values(data.appointments||{}).reduce((s,a)=>s+a.length,0);
+    const prev=data.notes?.trim()||(ac>0?`${ac} cita${ac>1?'s':''} registrada${ac>1?'s':''}`:'');
+    card.innerHTML=`<div class="nc-date">${me?`<span>${me}</span>`:''}${ds}</div><div class="nc-text">${prev}</div>`;
+    card.onclick=()=>{
+      selectedDate=date;currentMonth=date.getMonth();currentYear=date.getFullYear();
+      dayData=loadDay(selectedDate);showScreen('day');buildMonthStrip();buildCalendar();
+    };
+    list.appendChild(card);
+  });
+}
+
+function autoSave(){saveDay(selectedDate,dayData);}
+
+// INIT
+document.getElementById('yearLbl').textContent=currentYear;
+buildMonthStrip();buildCalendar();
+dayData=loadDay(selectedDate);
+</script>
+</body>
+</html>
